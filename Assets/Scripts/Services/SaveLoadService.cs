@@ -6,6 +6,8 @@ namespace TestClickerEcs
 {
     public class SaveLoadService
     {
+        public event Action SaveEvent;
+
         public void Save<T>(string key, T data) where T : class
         {
             if (data == null)
@@ -51,6 +53,16 @@ namespace TestClickerEcs
                 Debug.LogError($"Error loading data with key {key}: {e.Message}");
                 return defaultValue;
             }
+        }
+
+        public void SaveAll()
+        {
+            SaveEvent?.Invoke();
+        }
+
+        public void Destroy()
+        {
+            SaveEvent = null;
         }
 
         public bool HasKey(string key)

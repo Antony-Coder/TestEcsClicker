@@ -19,6 +19,11 @@ namespace TestClickerEcs
             }
             listeners[typeof(T)].Add(listener);
         }
+
+        public void Destroy()
+        {
+            listeners.Clear();
+        }
     }
 
 }

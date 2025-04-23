@@ -15,22 +15,27 @@ namespace TestClickerEcs
 
         private EcsWorld world;
         private IEcsSystems systems;
+        private EventService eventService;
+        private SaveLoadService saveLoadService;
+
 
         void Start()
         {
             SharedData sharedData = new SharedData(balanceView, rootBusinesses, prefabBusiness,businessWindowTextConfig, businesses);
 
-            SaveLoadService saveLoadService = new SaveLoadService();
-            EventService eventService = new EventService();
+
             BusinessViewUpdateService businessViewUpdateService = new BusinessViewUpdateService();
+
+            eventService = new EventService();
+            saveLoadService = new SaveLoadService();
 
             world = new EcsWorld();
             systems = new EcsSystems(world, sharedData);
 
             systems
                 .Add(new BusinessBuildSystem())
-                .Add(new BalanceSaveLoadSystem(saveLoadService))
-                .Add(new BusinessSaveLoadSystem(saveLoadService))               
+                .Add(new BusinessSaveLoadSystem(saveLoadService))
+                .Add(new BalanceSaveLoadSystem(saveLoadService))               
                 .Add(new BuyUpgradeSystem(eventService))
                 .Add(new BuyLevelSystem(eventService))
                 .Add(new ProfitSystem())
@@ -58,6 +63,36 @@ namespace TestClickerEcs
                 world.Destroy();
                 world = null;
             }
+
+            eventService.Destroy();
+            saveLoadService.Destroy();
+        }
+
+        private void Save()
+        {
+            if (saveLoadService == null) return;
+            saveLoadService.SaveAll();
+        }
+
+
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            Save();
+        }
+
+        private void OnApplicationQuit()
+        {
+            Save();
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                Save();
+            }
+
         }
     }
 }

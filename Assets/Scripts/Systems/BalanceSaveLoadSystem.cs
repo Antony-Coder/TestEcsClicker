@@ -6,17 +6,19 @@ namespace TestClickerEcs
     public class BalanceSaveLoadSystem : IEcsInitSystem, IEcsDestroySystem
     {
         private SaveLoadService saveLoadService;
+        private EcsWorld world;
 
         private const string saveKey = "BalanceSave";
 
         public BalanceSaveLoadSystem(SaveLoadService saveLoadService)
         {
             this.saveLoadService = saveLoadService;
+            saveLoadService.SaveEvent += Save;
         }
 
         public void Init(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
+            world = systems.GetWorld();
 
             SharedData sharedData = systems.GetShared<SharedData>();
 
@@ -31,11 +33,16 @@ namespace TestClickerEcs
 
 
 
-
-
         public void Destroy(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
+            Save();
+        }
+
+        public void Save()
+        {
+            if (world == null) return;
+
+            Debug.Log("SAVE");
 
             BalanceSave save = new BalanceSave();
 
@@ -45,7 +52,7 @@ namespace TestClickerEcs
                 save.Dollars = balanceComponent.Value;
             }
 
-            saveLoadService.Save<BalanceSave>(saveKey,save);
+            saveLoadService.Save<BalanceSave>(saveKey, save);
         }
     }
 }

@@ -4,18 +4,20 @@ using UnityEngine;
 
 namespace TestClickerEcs
 {
-    public class BusinessSaveLoadSystem : IEcsInitSystem, IEcsDestroySystem
+    public class BusinessSaveLoadSystem : IEcsInitSystem,  IEcsDestroySystem
     {
         private SaveLoadService saveLoadService;
-
+        private EcsWorld world;
         public BusinessSaveLoadSystem(SaveLoadService saveLoadService)
         {
             this.saveLoadService = saveLoadService;
+            saveLoadService.SaveEvent += Save;
         }
+
 
         public void Init(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
+            world = systems.GetWorld();
 
             var filter = world.Filter<BusinessComponent>().End();
 
@@ -67,16 +69,20 @@ namespace TestClickerEcs
             }
         }
 
-
-
-
-
         public void Destroy(IEcsSystems systems)
         {
-            var world = systems.GetWorld();
+            Save();
+        }
+
+
+
+        public void Save()
+        {
+            if (world == null) return;
+
+            Debug.Log("SAVE");
 
             var filter = world.Filter<BusinessComponent>().End();
-
 
             foreach (var entity in filter)
             {
@@ -86,16 +92,14 @@ namespace TestClickerEcs
                 BusinessSave save = new BusinessSave();
                 save.Level = business.Level;
                 save.UpgradePurchased = new bool[business.UpgradeMultiplier.Length];
-               
+
                 for (int i = 0; i < business.UpgradeMultiplier.Length; i++)
                 {
-                    save.UpgradePurchased[i] = business.UpgradeMultiplier[i] != 0 ? true : false; 
+                    save.UpgradePurchased[i] = business.UpgradeMultiplier[i] != 0 ? true : false;
                 }
 
                 saveLoadService.Save<BusinessSave>(saveKey, save);
             }
-
         }
-
     }
 }
