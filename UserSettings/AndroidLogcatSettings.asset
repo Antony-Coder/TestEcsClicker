@@ -3,7 +3,7 @@
     "m_SelectedProcess": {
         "deviceId": "R9WT203NPMR",
         "name": "com.DefaultCompany.TestClickerEcs",
-        "processId": 5149,
+        "processId": 10054,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -48,6 +48,18 @@
             "deviceId": "R9WT203NPMR",
             "name": "com.DefaultCompany.TestClickerEcs",
             "processId": 5149,
+            "exited": false
+        },
+        {
+            "deviceId": "R9WT203NPMR",
+            "name": "com.DefaultCompany.TestClickerEcs",
+            "processId": 6340,
+            "exited": false
+        },
+        {
+            "deviceId": "R9WT203NPMR",
+            "name": "com.DefaultCompany.TestClickerEcs",
+            "processId": 10054,
             "exited": false
         }
     ],

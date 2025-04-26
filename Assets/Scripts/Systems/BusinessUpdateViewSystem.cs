@@ -3,21 +3,16 @@ using UnityEngine;
 
 namespace TestClickerEcs
 {
-    public class BusinessUpdateViewSystem : IEcsInitSystem, IEcsRunSystem, IEcsEventListener<LevelUpEvent>, IEcsEventListener<BalanceChangedEvent>, IEcsEventListener<UpgradePurchasedEvent>
+    public class BusinessUpdateViewSystem : IEcsInitSystem, IEcsRunSystem
     {
         private BusinessViewUpdateService businessViewUpdateService;
 
         private EcsWorld world;
-        private EcsFilter businessComponents;
-        private EcsFilter balanceFilter;
 
-        public BusinessUpdateViewSystem(BusinessViewUpdateService businessViewUpdateService, EventService eventService)
+
+        public BusinessUpdateViewSystem(BusinessViewUpdateService businessViewUpdateService)
         {
             this.businessViewUpdateService = businessViewUpdateService;
-
-            eventService.AddListener<LevelUpEvent>(this);
-            eventService.AddListener<BalanceChangedEvent>(this);
-            eventService.AddListener<UpgradePurchasedEvent>(this);
         }
 
 
@@ -25,10 +20,8 @@ namespace TestClickerEcs
         {
             world = systems.GetWorld();
 
-            businessComponents = world.Filter<BusinessComponent>().End();
-            balanceFilter = world.Filter<BalanceComponent>().End();
 
-            foreach (var entity in businessComponents)
+            foreach (var entity in world.Filter<BusinessComponent>().End())
             {
                 ref var business = ref world.GetPool<BusinessComponent>().Get(entity);
 
@@ -68,56 +61,76 @@ namespace TestClickerEcs
                
         }
 
-        public void OnEvent(ref BalanceChangedEvent entityEvent)
-        {
-            foreach (var entityBusiness in businessComponents)
-            {
-                ref var business = ref world.GetPool<BusinessComponent>().Get(entityBusiness);
-
-                int balance = GetBalance();
-
-                bool levelUpButtonActive = balance >= business.LevelUpPrice;
-                businessViewUpdateService.SetLevelUpPrice(business, business.LevelUpPrice);
-                businessViewUpdateService.SetLevelUpButtonInterctable(business, levelUpButtonActive);
 
 
-                for (int i = 0; i < business.Settings.Upgrades.Length; i++)
-                {
-                    int price = business.Settings.Upgrades[i].ParamsUpgrade.Price;
-                    bool buttonActive = business.UpgradeMultiplier[i] == 0 && balance >= price;
-                    businessViewUpdateService.SetUpgradeButtonInterctable(business, i, buttonActive);
-                }
 
 
-                businessViewUpdateService.SetProgressBar(business, business.ProfitProgress);
-
-            }
-        }
-
-        public void OnEvent(ref LevelUpEvent levelUpEvent)
-        {
-            ref var business = ref world.GetPool<BusinessComponent>().Get(levelUpEvent.BusinessEntity);
-
-            businessViewUpdateService.SetLevel(business, business.Level);
-            businessViewUpdateService.SetProfit(business, business.Profit);
-            businessViewUpdateService.SetLevelUpPrice(business, business.LevelUpPrice);
-        }
-
-        public void OnEvent(ref UpgradePurchasedEvent upgradePurchasedEvent)
-        {
-            ref var business = ref world.GetPool<BusinessComponent>().Get(upgradePurchasedEvent.BusinessEntity);
-
-            businessViewUpdateService.SetUpgradePurchased(business, upgradePurchasedEvent.UpgradeId);
-            businessViewUpdateService.SetProfit(business, business.Profit);
-        }
 
         public void Run(IEcsSystems systems)
         {
-
-            foreach (var entityBusiness in businessComponents)
+            foreach (var entity in world.Filter<LevelUpEvent>().End())
             {
-                ref var business = ref world.GetPool<BusinessComponent>().Get(entityBusiness);
+                ref var result = ref world.GetPool<BuyResultEvent>().Get(entity);
 
+                if (result.Success)
+                {
+                    ref var levelUpEvent = ref world.GetPool<LevelUpEvent>().Get(entity);
+                    ref var business = ref world.GetPool<BusinessComponent>().Get(levelUpEvent.BusinessEntity);
+
+                    businessViewUpdateService.SetLevel(business, business.Level);
+                    businessViewUpdateService.SetProfit(business, business.Profit);
+                    businessViewUpdateService.SetLevelUpPrice(business, business.LevelUpPrice);
+                }
+
+            }
+
+
+            foreach (var entity in world.Filter<UpgradeEvent>().End())
+            {
+
+                ref var result = ref world.GetPool<BuyResultEvent>().Get(entity);
+
+                if (result.Success)
+                {
+                    ref var upgradePurchasedEvent = ref world.GetPool<UpgradeEvent>().Get(entity);
+
+                    ref var business = ref world.GetPool<BusinessComponent>().Get(upgradePurchasedEvent.BusinessEntity);
+
+                    businessViewUpdateService.SetUpgradePurchased(business, upgradePurchasedEvent.UpgradeId);
+                    businessViewUpdateService.SetProfit(business, business.Profit);
+                }
+
+
+            }
+
+
+            foreach (var entityEvent in world.Filter<BalanceChangedEvent>().End())
+            {
+                foreach (var entity in world.Filter<BusinessComponent>().End())
+                {
+                    ref var business = ref world.GetPool<BusinessComponent>().Get(entity);
+
+                    int balance = GetBalance();
+
+                    bool levelUpButtonActive = balance >= business.LevelUpPrice;
+                    businessViewUpdateService.SetLevelUpPrice(business, business.LevelUpPrice);
+                    businessViewUpdateService.SetLevelUpButtonInterctable(business, levelUpButtonActive);
+
+
+                    for (int i = 0; i < business.Settings.Upgrades.Length; i++)
+                    {
+                        int price = business.Settings.Upgrades[i].ParamsUpgrade.Price;
+                        bool buttonActive = business.UpgradeMultiplier[i] == 0 && balance >= price;
+                        businessViewUpdateService.SetUpgradeButtonInterctable(business, i, buttonActive);
+                    }
+
+                }
+
+            }
+
+            foreach (var entity in world.Filter<BusinessComponent>().End())
+            {
+                ref var business = ref world.GetPool<BusinessComponent>().Get(entity);
                 businessViewUpdateService.SetProgressBar(business, business.ProfitProgress);
             }
 
@@ -129,7 +142,7 @@ namespace TestClickerEcs
         {
             int balance = 0;
 
-            foreach (var balanceEntity in balanceFilter)
+            foreach (var balanceEntity in world.Filter<BalanceComponent>().End())
             {
                 ref var balanceComponent = ref world.GetPool<BalanceComponent>().Get(balanceEntity);
                 balance = balanceComponent.Value;

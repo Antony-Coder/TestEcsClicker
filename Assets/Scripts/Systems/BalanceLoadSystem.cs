@@ -3,17 +3,16 @@ using UnityEngine;
 
 namespace TestClickerEcs
 {
-    public class BalanceSaveLoadSystem : IEcsInitSystem, IEcsDestroySystem
+    public class BalanceLoadSystem : IEcsInitSystem
     {
         private SaveLoadService saveLoadService;
         private EcsWorld world;
 
         private const string saveKey = "BalanceSave";
 
-        public BalanceSaveLoadSystem(SaveLoadService saveLoadService)
+        public BalanceLoadSystem(SaveLoadService saveLoadService)
         {
             this.saveLoadService = saveLoadService;
-            saveLoadService.SaveEvent += Save;
         }
 
         public void Init(IEcsSystems systems)
@@ -33,26 +32,5 @@ namespace TestClickerEcs
 
 
 
-        public void Destroy(IEcsSystems systems)
-        {
-            Save();
-        }
-
-        public void Save()
-        {
-            if (world == null) return;
-
-            Debug.Log("SAVE");
-
-            BalanceSave save = new BalanceSave();
-
-            foreach (var entity in world.Filter<BalanceComponent>().End())
-            {
-                ref var balanceComponent = ref world.GetPool<BalanceComponent>().Get(entity);
-                save.Dollars = balanceComponent.Value;
-            }
-
-            saveLoadService.Save<BalanceSave>(saveKey, save);
-        }
     }
 }

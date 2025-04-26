@@ -1,6 +1,6 @@
 ﻿namespace TestClickerEcs
 {
-    public struct UpgradePurchasedEvent
+    public struct UpgradeEvent
     {
         public int BusinessEntity;
         public int UpgradeId;

@@ -18,7 +18,6 @@ namespace TestClickerEcs
                 var entity = systems.GetWorld().NewEntity();
                 ref var business = ref world.GetPool<BusinessComponent>().Add(entity);
 
-
                 business.Id = i;
                 business.Level = 0;
                 business.UpgradeMultiplier = new float[sharedData.Businesses[i].Upgrades.Length];

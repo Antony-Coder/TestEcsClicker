@@ -3,16 +3,10 @@ using UnityEngine;
 
 namespace TestClickerEcs
 {
-    public class BalanceUpdateViewSystem : IEcsInitSystem,  IEcsEventListener<BalanceChangedEvent>
+    public class BalanceUpdateViewSystem : IEcsInitSystem, IEcsRunSystem
     {
         private EcsWorld world;
         private SharedData sharedData;
-
-
-        public BalanceUpdateViewSystem(EventService eventService)
-        {
-            eventService.AddListener<BalanceChangedEvent>(this);
-        }
 
         public void Init(IEcsSystems systems)
         {
@@ -21,9 +15,14 @@ namespace TestClickerEcs
             UpdateView();
         }
 
-        public void OnEvent(ref BalanceChangedEvent evt)
+
+
+        public void Run(IEcsSystems systems)
         {
-            UpdateView();
+            foreach(var entity in world.Filter<BalanceChangedEvent>().End())
+            {
+                UpdateView();
+            }
         }
 
         private void UpdateView()

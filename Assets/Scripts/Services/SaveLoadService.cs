@@ -6,7 +6,6 @@ namespace TestClickerEcs
 {
     public class SaveLoadService
     {
-        public event Action SaveEvent;
 
         public void Save<T>(string key, T data) where T : class
         {
@@ -55,15 +54,6 @@ namespace TestClickerEcs
             }
         }
 
-        public void SaveAll()
-        {
-            SaveEvent?.Invoke();
-        }
-
-        public void Destroy()
-        {
-            SaveEvent = null;
-        }
 
         public bool HasKey(string key)
         {

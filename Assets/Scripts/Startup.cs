@@ -1,4 +1,5 @@
 using Leopotam.EcsLite;
+using Leopotam.EcsLite.ExtendedSystems;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,34 +16,42 @@ namespace TestClickerEcs
 
         private EcsWorld world;
         private IEcsSystems systems;
-        private EventService eventService;
-        private SaveLoadService saveLoadService;
-
+        private IEcsSystems saveSystems;
 
         void Start()
         {
             SharedData sharedData = new SharedData(balanceView, rootBusinesses, prefabBusiness,businessWindowTextConfig, businesses);
-
-
             BusinessViewUpdateService businessViewUpdateService = new BusinessViewUpdateService();
-
-            eventService = new EventService();
-            saveLoadService = new SaveLoadService();
+            SaveLoadService saveLoadService = new SaveLoadService();
 
             world = new EcsWorld();
             systems = new EcsSystems(world, sharedData);
+            saveSystems = new EcsSystems(world);
 
             systems
                 .Add(new BusinessBuildSystem())
-                .Add(new BusinessSaveLoadSystem(saveLoadService))
-                .Add(new BalanceSaveLoadSystem(saveLoadService))               
-                .Add(new BuyUpgradeSystem(eventService))
-                .Add(new BuyLevelSystem(eventService))
+                .Add(new BusinessLoadSystem(saveLoadService))
+                .Add(new BalanceLoadSystem(saveLoadService))               
+                .Add(new BuyUpgradeSystem())
+                .Add(new BuyLevelSystem())
                 .Add(new ProfitSystem())
-                .Add(new BalanceSystem(eventService))
-                .Add(new BusinessUpdateViewSystem( businessViewUpdateService,eventService))
-                .Add(new BalanceUpdateViewSystem(eventService))
-                .Add(new EventSystem(eventService))
+                .Add(new BalanceSystem())
+                .Add(new BuyUpgradeHandlerSystem())
+                .Add(new BuyLevelHandlerSystem())
+                .Add(new BusinessUpdateViewSystem(businessViewUpdateService))
+                .Add(new BalanceUpdateViewSystem())
+                .DelHere<LevelUpEvent>()
+                .DelHere<BalanceChangedEvent>()
+                .DelHere<BuyResultEvent>()
+                .DelHere<IncreaseBalanceEvent>()
+                .DelHere<UpgradeEvent>()
+                .DelHere<TryBuyEvent>()
+                .Init();
+
+
+            saveSystems
+                .Add(new BalanceSaveSystem(saveLoadService))
+                .Add(new BusinessSaveSystem(saveLoadService))
                 .Init();
         }
 
@@ -55,7 +64,9 @@ namespace TestClickerEcs
         {
             if (systems != null)
             {
+                saveSystems.Destroy();
                 systems.Destroy();
+                saveSystems = null;
                 systems = null;
             }
             if (world != null)
@@ -64,21 +75,15 @@ namespace TestClickerEcs
                 world = null;
             }
 
-            eventService.Destroy();
-            saveLoadService.Destroy();
         }
-
-        private void Save()
-        {
-            if (saveLoadService == null) return;
-            saveLoadService.SaveAll();
-        }
-
 
 
         private void OnApplicationFocus(bool hasFocus)
         {
-            Save();
+            if (!hasFocus)
+            {
+                Save();
+            }
         }
 
         private void OnApplicationQuit()
@@ -94,6 +99,13 @@ namespace TestClickerEcs
             }
 
         }
+
+        private void Save()
+        {
+            saveSystems?.Run();
+        }
+
+
     }
 }
 
